@@ -548,7 +548,8 @@ async def process_and_record(request: ProcessTextRequest) -> Dict:
             payment_method=parsed_data["payment_method"],
             product_name=parsed_data["product_name"],
             quantity=parsed_data["quantity"],
-            unit_price_excl_tax=unit_price_excl_tax
+            unit_price_excl_tax=unit_price_excl_tax,
+            unit_price_incl_tax=unit_price_incl_tax  # I列表示用（税込金額）
         )
 
         if result.get("success"):
