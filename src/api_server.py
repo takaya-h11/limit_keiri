@@ -403,6 +403,32 @@ async def health():
         }
 
 
+@app.get("/api/list_models")
+async def list_models():
+    """利用可能なGeminiモデルを一覧表示（診断用）"""
+    try:
+        genai.configure(api_key=Config.GEMINI_API_KEY)
+        models = []
+        for model in genai.list_models():
+            if 'generateContent' in model.supported_generation_methods:
+                models.append({
+                    "name": model.name,
+                    "display_name": model.display_name,
+                    "description": model.description
+                })
+        return {
+            "success": True,
+            "models": models,
+            "count": len(models)
+        }
+    except Exception as e:
+        logger.error(f"Failed to list models: {e}")
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
 @app.post("/api/record_sale")
 async def record_sale(request: RecordSaleRequest) -> Dict:
     """
