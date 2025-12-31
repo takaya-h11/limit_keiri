@@ -24,6 +24,9 @@ class Config:
     GOOGLE_SHEET_ID = os.getenv("GOOGLE_SHEET_ID")
     SERVICE_ACCOUNT_FILE = os.getenv("SERVICE_ACCOUNT_FILE")
 
+    # Gemini API
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
     # Logging
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
@@ -68,7 +71,8 @@ class Config:
     def validate(cls):
         """Validate that all required environment variables are set"""
         required_vars = [
-            "GOOGLE_SHEET_ID"
+            "GOOGLE_SHEET_ID",
+            "GEMINI_API_KEY"
         ]
 
         missing_vars = [var for var in required_vars if not getattr(cls, var)]
