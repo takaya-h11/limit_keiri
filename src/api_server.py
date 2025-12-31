@@ -70,8 +70,8 @@ def get_gemini_model():
     global gemini_model
     if gemini_model is None:
         genai.configure(api_key=Config.GEMINI_API_KEY)
-        # gemini-1.5-flash: 安定版、無料枠が大きい（15 RPM, 1M TPM）
-        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        # gemini-1.5-flash-latest: 安定版、無料枠が大きい（15 RPM, 1M TPM）
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
     return gemini_model
 
 
