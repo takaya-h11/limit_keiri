@@ -70,8 +70,8 @@ def get_gemini_model():
     global gemini_model
     if gemini_model is None:
         genai.configure(api_key=Config.GEMINI_API_KEY)
-        # gemini-1.5-flash-latest: 安定版、無料枠が大きい（15 RPM, 1M TPM）
-        gemini_model = genai.GenerativeModel('gemini-1.5-flash-latest')
+        # gemini-pro: 最も安定したモデル、無料枠あり（60 RPM）
+        gemini_model = genai.GenerativeModel('gemini-pro')
     return gemini_model
 
 
@@ -105,7 +105,7 @@ def parse_sale_text_with_gemini(text: str) -> Dict:
     Gemini APIを使ってLINEメッセージから売上情報を抽出
 
     Args:
-        text: LINEメッセージ（例：「12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 岩佐将平」）
+        text: LINEメッセージ（例：「12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 服部誉也」）
 
     Returns:
         dict: {
@@ -308,13 +308,13 @@ async def root():
             <textarea
                 id="saleText"
                 name="text"
-                placeholder="例: 12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 岩佐将平"
+                placeholder="例: 12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 服部誉也"
                 required
             ></textarea>
 
             <div class="example">
                 <div class="example-title">📝 入力例:</div>
-                12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 岩佐将平
+                12/28 PayPalで月4回プラン 35,200円 販売しました。顧客: 服部誉也
             </div>
 
             <div class="button-container">
