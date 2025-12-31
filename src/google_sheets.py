@@ -186,7 +186,11 @@ class GoogleSheetsClient:
         next_row = sheet_info["next_row"]
         logger.info(f"[書き込み先] 次の空行: {next_row} 行目")
 
-        # データを準備（C列〜H列）
+        # I列・J列の計算
+        subtotal_excl_tax = quantity * unit_price_excl_tax  # I列: 小計（税抜）
+        consumption_tax = int(subtotal_excl_tax * 0.1)       # J列: 消費税（整数）
+
+        # データを準備（C列〜J列）
         # B列（決済チェックボックス）は空欄のまま
         row_data = [
             day,                    # C列: 日
@@ -194,15 +198,18 @@ class GoogleSheetsClient:
             payment_method,         # E列: 決済方法
             product_name,           # F列: 商品・サービス名
             quantity,               # G列: 数量
-            unit_price_excl_tax     # H列: 単価（税抜）
+            unit_price_excl_tax,    # H列: 単価（税抜）
+            subtotal_excl_tax,      # I列: 小計（税抜）
+            consumption_tax         # J列: 消費税
         ]
 
-        logger.info(f"[書き込みデータ] C列〜H列: {row_data}")
+        logger.info(f"[書き込みデータ] C列〜J列: {row_data}")
+        logger.info(f"[計算結果] 小計（税抜）={subtotal_excl_tax}, 消費税={consumption_tax}")
 
         try:
-            # C列から始めて、H列まで書き込み
-            # range_nameは "C{row}:H{row}" の形式
-            range_name = f"C{next_row}:H{next_row}"
+            # C列から始めて、J列まで書き込み
+            # range_nameは "C{row}:J{row}" の形式
+            range_name = f"C{next_row}:J{next_row}"
             logger.info(f"[書き込み範囲] {range_name}")
 
             self.current_sheet.update(range_name, [row_data])
