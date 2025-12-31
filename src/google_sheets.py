@@ -189,15 +189,14 @@ class GoogleSheetsClient:
         logger.info(f"[書き込み先] 次の空行: {next_row} 行目")
 
         # I列・J列の計算
-        # I列: 税込金額（元の入力値をそのまま表示）
+        subtotal_excl_tax = quantity * unit_price_excl_tax  # I列: 合計（税抜）
+
+        # J列: 合計（税込）- 元の税込金額をそのまま表示
         if unit_price_incl_tax is not None:
-            subtotal_incl_tax = quantity * unit_price_incl_tax  # I列: 小計（税込）
+            subtotal_incl_tax = quantity * unit_price_incl_tax  # J列: 合計（税込）
         else:
             # 後方互換性: 税込が渡されない場合は税抜から逆算
             subtotal_incl_tax = int(quantity * unit_price_excl_tax * 1.1)
-
-        subtotal_excl_tax = quantity * unit_price_excl_tax  # 税抜小計（計算用）
-        consumption_tax = int(subtotal_excl_tax * 0.1)       # J列: 消費税（整数）
 
         # データを準備（C列〜J列）
         # B列（決済チェックボックス）は空欄のまま
@@ -208,12 +207,12 @@ class GoogleSheetsClient:
             product_name,           # F列: 商品・サービス名
             quantity,               # G列: 数量
             unit_price_excl_tax,    # H列: 単価（税抜）
-            subtotal_incl_tax,      # I列: 小計（税込）
-            consumption_tax         # J列: 消費税
+            subtotal_excl_tax,      # I列: 合計（税抜）
+            subtotal_incl_tax       # J列: 合計（税込）
         ]
 
         logger.info(f"[書き込みデータ] C列〜J列: {row_data}")
-        logger.info(f"[計算結果] 小計（税込）={subtotal_incl_tax}, 小計（税抜）={subtotal_excl_tax}, 消費税={consumption_tax}")
+        logger.info(f"[計算結果] 合計（税抜）={subtotal_excl_tax}, 合計（税込）={subtotal_incl_tax}")
 
         try:
             # C列から始めて、J列まで書き込み
