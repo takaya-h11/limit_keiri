@@ -69,9 +69,19 @@ def get_gemini_model():
     """Get or create Gemini model"""
     global gemini_model
     if gemini_model is None:
-        genai.configure(api_key=Config.GEMINI_API_KEY)
-        # gemini-pro: 最も安定したモデル、無料枠あり（60 RPM）
-        gemini_model = genai.GenerativeModel('gemini-pro')
+        # APIキーの読み込み確認
+        api_key = Config.GEMINI_API_KEY
+        if not api_key:
+            logger.error("[Gemini初期化失敗] GEMINI_API_KEY が設定されていません")
+            raise ValueError("GEMINI_API_KEY environment variable is not set")
+
+        logger.info(f"[Gemini初期化] APIキー読み込み成功（先頭8文字: {api_key[:8]}...）")
+        genai.configure(api_key=api_key)
+
+        # gemini-2.5-flash: 2025年6月リリースの安定版、最新のFlashモデル
+        model_name = 'gemini-2.5-flash'
+        logger.info(f"[Gemini初期化] モデル: {model_name}")
+        gemini_model = genai.GenerativeModel(model_name)
     return gemini_model
 
 
@@ -159,9 +169,21 @@ def parse_sale_text_with_gemini(text: str) -> Dict:
         logger.info(f"[Gemini解析成功] {result}")
         return result
 
+    except json.JSONDecodeError as e:
+        logger.error(f"[JSON解析失敗] Geminiの応答がJSONではありません: {e}")
+        logger.error(f"[生の応答] {response.text if 'response' in locals() else 'N/A'}")
+        raise HTTPException(status_code=500, detail=f"Gemini応答のJSON解析に失敗: {str(e)}")
+    except AttributeError as e:
+        logger.error(f"[Gemini応答エラー] レスポンスオブジェクトが不正: {e}")
+        logger.error(f"[レスポンス詳細] {response if 'response' in locals() else 'N/A'}")
+        raise HTTPException(status_code=500, detail=f"Gemini APIからの応答が不正です: {str(e)}")
     except Exception as e:
-        logger.error(f"[Gemini解析失敗] エラー: {e}")
-        raise HTTPException(status_code=500, detail=f"Gemini APIでのテキスト解析に失敗しました: {str(e)}")
+        # HTTPステータスコードが含まれる場合は抽出
+        error_message = str(e)
+        status_code_match = error_message.split()[0] if error_message else "Unknown"
+        logger.error(f"[Gemini API失敗] ステータスコード: {status_code_match}")
+        logger.error(f"[詳細エラー] {error_message}")
+        raise HTTPException(status_code=500, detail=f"Gemini APIエラー: {error_message}")
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -508,8 +530,8 @@ async def process_and_record(request: ProcessTextRequest) -> Dict:
 
         # 2. 税抜単価を計算: floor(税込 / 1.1)
         unit_price_incl_tax = parsed_data["unit_price_incl_tax"]
-        unit_price_excl_tax = int(unit_price_incl_tax / 1.1)
-        logger.info(f"[税抜計算] 税込: {unit_price_incl_tax} → 税抜: {unit_price_excl_tax}")
+        unit_price_excl_tax = int(unit_price_incl_tax / 1.1)  # floor関数として動作
+        logger.info(f"[税抜計算] floor({unit_price_incl_tax} / 1.1) = {unit_price_excl_tax}")
 
         # 3. Google Sheetsに記帳
         client = get_sheets_client()
