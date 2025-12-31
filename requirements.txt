@@ -1,0 +1,26 @@
+# MCP Framework
+fastmcp>=0.1.0
+
+# LINE Messaging API
+line-bot-sdk>=3.0.0
+
+# Google Sheets API
+gspread>=5.12.0
+google-auth>=2.23.0
+google-auth-oauthlib>=1.1.0
+google-auth-httplib2>=0.1.1
+
+# Environment Management
+python-dotenv>=1.0.0
+
+# Utilities
+requests>=2.31.0
+
+# Web Framework for LINE Webhook
+fastapi>=0.104.0
+uvicorn>=0.24.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+httpx>=0.25.0  # For testing FastAPI

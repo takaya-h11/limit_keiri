@@ -1,0 +1,14 @@
+services:
+  # AI Cockpit API Server
+  - type: web
+    name: limit-yotsuya-cockpit
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m src.api_server
+    envVars:
+      - key: GOOGLE_SHEET_ID
+        value: 1oklcKDJ3QNVJ3WXawrr2c1oi0mrjyp39HwvyqcTwniE
+      - key: GOOGLE_APPLICATION_CREDENTIALS_JSON
+        sync: false  # Manual configuration required (Base64 encoded JSON)
+      - key: LOG_LEVEL
+        value: INFO

@@ -1,0 +1,44 @@
+{
+  "name": "record_gym_sale",
+  "description": "リミット四ツ谷店の売上情報をGoogleスプレッドシートに記録します。税抜単価は既に計算済みの値（floor(税込/1.1)）を受け取ります。",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "day": {
+        "type": "integer",
+        "description": "日付（数値のみ、例：28）"
+      },
+      "seller": {
+        "type": "string",
+        "description": "販売者名（例：服部誉也）",
+        "enum": ["服部誉也", "その他のトレーナー名"]
+      },
+      "payment_method": {
+        "type": "string",
+        "description": "決済方法（例：PayPal, PayPay, 現金, クレジットカード）",
+        "enum": ["PayPal", "PayPay", "現金", "クレジットカード", "銀行振込"]
+      },
+      "product_name": {
+        "type": "string",
+        "description": "商品・サービス名（例：月4回プラン, 月8回プラン, プロテイン）"
+      },
+      "quantity": {
+        "type": "integer",
+        "description": "数量（通常は1）",
+        "default": 1
+      },
+      "unit_price_excl_tax": {
+        "type": "integer",
+        "description": "単価（税抜・整数値）。税込金額から floor(税込金額 / 1.1) で計算した値。例: 35,200円 → 32,000円"
+      }
+    },
+    "required": [
+      "day",
+      "seller",
+      "payment_method",
+      "product_name",
+      "quantity",
+      "unit_price_excl_tax"
+    ]
+  }
+}
