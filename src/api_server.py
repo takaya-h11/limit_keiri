@@ -103,13 +103,19 @@ async def record_sale(request: RecordSaleRequest) -> Dict:
         dict: {
             "success": bool,
             "row": int,
-            "message": str
+            "message": str,
+            "sheet_name": str
         }
     """
-    try:
-        logger.info(f"Recording sale: {request.dict()}")
+    logger.info("=" * 80)
+    logger.info("[API] POST /api/record_sale - リクエスト受信")
+    logger.info(f"[リクエストデータ] {request.dict()}")
 
+    try:
         client = get_sheets_client()
+
+        logger.info("[処理開始] Google Sheetsクライアントを取得しました")
+
         result = client.record_sale(
             day=request.day,
             seller=request.seller,
@@ -119,9 +125,17 @@ async def record_sale(request: RecordSaleRequest) -> Dict:
             unit_price_excl_tax=request.unit_price_excl_tax
         )
 
+        if result.get("success"):
+            logger.info(f"[API成功] {result.get('message')} (シート: {result.get('sheet_name')})")
+        else:
+            logger.error(f"[API失敗] {result.get('message')}")
+
+        logger.info("=" * 80)
         return result
+
     except Exception as e:
-        logger.error(f"Error recording sale: {e}")
+        logger.error(f"[API例外] エラーが発生しました: {e}", exc_info=True)
+        logger.info("=" * 80)
         raise HTTPException(status_code=500, detail=str(e))
 
 

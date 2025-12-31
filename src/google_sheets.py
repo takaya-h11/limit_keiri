@@ -51,6 +51,7 @@ class GoogleSheetsClient:
         """
         Get the worksheet for the current month
         現在の月に応じたシートを取得（例：「12 月度」）
+        シートが存在しない場合は「テンプレート」から自動作成
 
         Returns:
             gspread.Worksheet: Current month's worksheet
@@ -62,12 +63,47 @@ class GoogleSheetsClient:
         current_month = datetime.now().month
         sheet_name = f"{current_month} 月度"
 
+        logger.info(f"[シート取得] 対象シート名: {sheet_name}")
+
         try:
             self.current_sheet = self.spreadsheet.worksheet(sheet_name)
-            logger.info(f"Opened sheet: {sheet_name}")
+            logger.info(f"[シート取得成功] シート '{sheet_name}' を開きました")
             return self.current_sheet
         except gspread.WorksheetNotFound:
-            logger.error(f"Sheet not found: {sheet_name}")
+            logger.warning(f"[シート未検出] シート '{sheet_name}' が見つかりません。テンプレートから作成します。")
+            return self._create_sheet_from_template(sheet_name)
+
+    def _create_sheet_from_template(self, sheet_name: str) -> gspread.Worksheet:
+        """
+        テンプレートシートから新しいシートを作成
+
+        Args:
+            sheet_name: 作成するシート名（例：「1 月度」）
+
+        Returns:
+            gspread.Worksheet: 作成されたシート
+
+        Raises:
+            gspread.WorksheetNotFound: テンプレートシートが見つからない場合
+        """
+        try:
+            # テンプレートシートを取得
+            template = self.spreadsheet.worksheet("テンプレート")
+            logger.info(f"[テンプレート取得成功] 'テンプレート' シートを取得しました")
+
+            # テンプレートを複製
+            new_sheet = template.duplicate(new_sheet_name=sheet_name)
+            logger.info(f"[シート作成成功] '{sheet_name}' シートを作成しました（テンプレートID: {template.id}）")
+
+            # 作成したシートをcurrent_sheetとして設定
+            self.current_sheet = new_sheet
+            return new_sheet
+
+        except gspread.WorksheetNotFound:
+            logger.error(f"[テンプレート未検出] 'テンプレート' シートが見つかりません。スプレッドシートに 'テンプレート' という名前のシートを作成してください。")
+            raise ValueError("テンプレートシートが見つかりません。スプレッドシートに 'テンプレート' という名前のシートを作成してください。")
+        except Exception as e:
+            logger.error(f"[シート作成失敗] シート '{sheet_name}' の作成に失敗しました: {e}")
             raise
 
     def get_sheet_info(self) -> Dict:
@@ -137,12 +173,18 @@ class GoogleSheetsClient:
         Returns:
             dict: {"success": bool, "row": int, "message": str}
         """
+        logger.info(f"[売上記録開始] day={day}, seller={seller}, payment_method={payment_method}, product_name={product_name}, quantity={quantity}, unit_price_excl_tax={unit_price_excl_tax}")
+
         if not self.current_sheet:
             self.get_current_month_sheet()
+
+        # スプレッドシートとシート名をログ出力
+        logger.info(f"[接続先] スプレッドシート: '{self.spreadsheet.title}', シート名: '{self.current_sheet.title}'")
 
         # 次の空行を取得
         sheet_info = self.get_sheet_info()
         next_row = sheet_info["next_row"]
+        logger.info(f"[書き込み先] 次の空行: {next_row} 行目")
 
         # データを準備（C列〜H列）
         # B列（決済チェックボックス）は空欄のまま
@@ -155,23 +197,29 @@ class GoogleSheetsClient:
             unit_price_excl_tax     # H列: 単価（税抜）
         ]
 
+        logger.info(f"[書き込みデータ] C列〜H列: {row_data}")
+
         try:
             # C列から始めて、H列まで書き込み
             # range_nameは "C{row}:H{row}" の形式
             range_name = f"C{next_row}:H{next_row}"
+            logger.info(f"[書き込み範囲] {range_name}")
+
             self.current_sheet.update(range_name, [row_data])
 
-            logger.info(f"Sale recorded at row {next_row}: {row_data}")
+            logger.info(f"[書き込み成功] {next_row} 行目に売上を記録しました")
 
             return {
                 "success": True,
                 "row": next_row,
-                "message": f"売上を {next_row} 行目に記録しました"
+                "message": f"売上を {next_row} 行目に記録しました",
+                "sheet_name": self.current_sheet.title
             }
         except Exception as e:
-            logger.error(f"Failed to record sale: {e}")
+            logger.error(f"[書き込み失敗] エラー: {e}")
             return {
                 "success": False,
                 "row": next_row,
-                "message": f"エラー: {str(e)}"
+                "message": f"エラー: {str(e)}",
+                "sheet_name": self.current_sheet.title if self.current_sheet else "不明"
             }
