@@ -40,6 +40,24 @@ app.add_middleware(
 # Google Sheets client (lazy initialization)
 sheets_client = None
 
+# 顧客リスト（最新）
+KNOWN_CUSTOMERS = [
+    "岩佐将平",
+    "堀内さやか",
+    "坂上明彦",
+    "河村直子",
+    "金子弘美",
+    "平安彦",
+    "西島優樹",
+    "桜井彰人",
+    "花田幸典",
+    "大塚由美",
+    "新津七海",
+    "冨田博信",
+    "竹内優馬",
+    "荻野悠加"
+]
+
 
 def get_sheets_client() -> GoogleSheetsClient:
     """Get or create Google Sheets client"""
@@ -54,7 +72,7 @@ def get_sheets_client() -> GoogleSheetsClient:
 class RecordSaleRequest(BaseModel):
     """売上記録リクエスト"""
     day: int
-    seller: str
+    seller: str  # 顧客名（D列）
     payment_method: str
     product_name: str
     quantity: int
@@ -116,6 +134,10 @@ async def record_sale(request: RecordSaleRequest) -> Dict:
 
         logger.info("[処理開始] Google Sheetsクライアントを取得しました")
 
+        # 顧客名の検証（警告のみ、処理は続行）
+        if request.seller not in KNOWN_CUSTOMERS:
+            logger.warning(f"[顧客名警告] '{request.seller}' は既知の顧客リストにありません。新規顧客の可能性があります。")
+
         result = client.record_sale(
             day=request.day,
             seller=request.seller,
@@ -159,7 +181,23 @@ async def get_schema():
                 },
                 "seller": {
                     "type": "string",
-                    "description": "販売者名（例：服部誉也）"
+                    "description": "顧客名（D列）",
+                    "enum": [
+                        "岩佐将平",
+                        "堀内さやか",
+                        "坂上明彦",
+                        "河村直子",
+                        "金子弘美",
+                        "平安彦",
+                        "西島優樹",
+                        "桜井彰人",
+                        "花田幸典",
+                        "大塚由美",
+                        "新津七海",
+                        "冨田博信",
+                        "竹内優馬",
+                        "荻野悠加"
+                    ]
                 },
                 "payment_method": {
                     "type": "string",

@@ -164,7 +164,7 @@ class GoogleSheetsClient:
 
         Args:
             day: 日付（数値のみ）
-            seller: 販売者名
+            seller: 顧客名（D列）
             payment_method: 決済方法
             product_name: 商品・サービス名
             quantity: 数量
